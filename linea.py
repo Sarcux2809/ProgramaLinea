@@ -5,12 +5,13 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Función para el algoritmo DDA (entero y flotante)
+# Función para el algoritmo DDA (dos listas: entero y flotante)
 def dda_algorithm(x1, y1, x2, y2):
     dx = x2 - x1
     dy = y2 - y1
     steps = max(abs(dx), abs(dy))
     
+    # Evitar división entre 0 si x1 == x2 y y1 == y2 (línea de un solo punto)
     if steps == 0:
         return [(x1, y1)], [(float(x1), float(y1))], dx, dy
     
@@ -55,8 +56,10 @@ def plot_line(canvas, points_float):
     x_vals = [p[0] for p in points_float]
     y_vals = [p[1] for p in points_float]
     
+    # Grafica la línea con puntos flotantes para que sea “suave”
     ax.plot(x_vals, y_vals, marker='o', linestyle='-', color='b', label='Línea DDA (float)')
     
+    # Etiquetar cada punto (opcional)
     for px, py in points_float:
         ax.text(px, py, f'({px:.1f},{py:.1f})', fontsize=8, ha='right')
     
@@ -71,6 +74,7 @@ def plot_line(canvas, points_float):
     ax.set_ylabel('Eje Y')
     ax.grid(color='gray', linestyle='--', linewidth=0.5)
     
+    # Ajuste dinámico de los límites de los ejes
     x_min, x_max = min(x_vals), max(x_vals)
     y_min, y_max = min(y_vals), max(y_vals)
     margin_x = (x_max - x_min) * 0.1 if x_max != x_min else 1
@@ -78,17 +82,22 @@ def plot_line(canvas, points_float):
     ax.set_xlim(x_min - margin_x, x_max + margin_x)
     ax.set_ylim(y_min - margin_y, y_max + margin_y)
     
+    # Escala igual en ambos ejes
     ax.set_aspect('equal', adjustable='box')
     
+    # Mostramos leyenda (para Inicio, Fin, etc.)
     ax.legend()
     
+    # Limpiamos cualquier contenido previo en el canvas de Tkinter
     for widget in canvas.winfo_children():
         widget.destroy()
     
+    # Mostramos la figura en el Frame de Tkinter
     canvas_plot = FigureCanvasTkAgg(fig, master=canvas)
     canvas_plot.draw()
     canvas_plot.get_tk_widget().pack()
 
+# Función para ejecutar el algoritmo DDA
 def run_dda():
     try:
         x1 = int(entry_x1.get())
@@ -124,6 +133,7 @@ def run_dda():
         
         direction_text = f"Dirección: {dir_x}, {dir_y}"
         
+        # Construimos el texto para resultados
         if m is not None:
             result_text.set(
                 f"{case_desc}\n"
@@ -132,17 +142,19 @@ def run_dda():
                 f"{direction_text}"
             )
         else:
+            # Si la pendiente es indefinida (dx=0), m es None
             result_text.set(
                 f"{case_desc}\n"
                 f"Inclinación: {angle_deg:.2f}°\n"
                 f"{direction_text}"
             )
 
-        # Mostramos los puntos enteros en la lista
+        # Mostramos los puntos en la lista con 2 decimales (del array FLOAT)
         coord_list.delete(0, tk.END)
-        for p in points_int:
-            coord_list.insert(tk.END, f"{p}")
+        for px, py in points_float:
+            coord_list.insert(tk.END, f"({px:.2f}, {py:.2f})")
         
+        # Graficamos usando los puntos flotantes para línea suave
         plot_line(graph_canvas, points_float)
     except ValueError:
         messagebox.showerror("Error", "Por favor, ingrese valores enteros válidos.")
@@ -196,9 +208,9 @@ tk.Label(frame_left, text="Resultados", font=("Arial", 12, "bold"), bg='#f0f0f0'
 result_text = tk.StringVar()
 tk.Label(frame_left, textvariable=result_text, font=("Arial", 10), bg='#f0f0f0', justify=tk.LEFT).pack()
 
-# Lista de puntos de la línea (discretos)
+# Lista de puntos de la línea (más alta para menos scroll)
 tk.Label(frame_left, text="Puntos de la Línea", font=("Arial", 12, "bold"), bg='#f0f0f0').pack(pady=5)
-coord_list = tk.Listbox(frame_left, height=10, width=20, font=("Arial", 10))
+coord_list = tk.Listbox(frame_left, height=20, width=25, font=("Arial", 10))
 coord_list.pack()
 
 # Canvas para el gráfico
